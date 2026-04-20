@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-deep: #05070A;
+  --color-bg-panel: #0D1117;
+  --color-bg-hover: #161B22;
+  --color-accent-blue: #3B82F6;
+  --color-accent-green: #10B981;
+  --color-text-main: #F0F6FC;
+  --color-text-dim: #8B949E;
+  --color-border-subtle: #21262D;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+}
+
+@layer base {
+  body {
+    background-color: #05070A;
+    color: #F0F6FC;
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  .professional-card {
+    @apply bg-bg-panel border border-border-subtle rounded-2xl transition-all duration-300;
+  }
+
+  .professional-card:hover {
+    @apply bg-bg-hover border-accent-blue/30 shadow-2xl shadow-accent-blue/5;
+  }
+
+  .professional-button-primary {
+    @apply bg-accent-blue text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-[0.98] shadow-lg shadow-accent-blue/20 hover:shadow-accent-blue/40;
+  }
+
+  .professional-button-secondary {
+    @apply bg-bg-hover border border-border-subtle text-text-main px-6 py-2.5 rounded-xl font-medium transition-all active:scale-[0.98] hover:border-text-dim/50;
+  }
+
+  .subject-tag-professional {
+    @apply bg-accent-blue/10 border border-accent-blue/30 text-accent-blue px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest;
+  }
+  
+  .glass-effect {
+    @apply bg-bg-panel/80 backdrop-blur-md border border-white/5;
+  }
+}

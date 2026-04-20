@@ -1,0 +1,165 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores student profile and progress",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "grade": { "type": "string" },
+        "subjects": { "type": "array", "items": { "type": "string" } },
+        "role": { "type": "string", "enum": ["student", "teacher"] },
+        "points": { "type": "integer" },
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "goals": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["school", "competitive"] },
+            "targetExams": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "weakAreas": { "type": "array", "items": { "type": "string" } },
+        "strongAreas": { "type": "array", "items": { "type": "string" } },
+        "streak": { "type": "integer" },
+        "lastActive": { "type": "integer" },
+        "totalTopicsStudied": { "type": "integer" },
+        "onboarded": { "type": "boolean" }
+      },
+      "required": ["userId", "email", "grade", "onboarded"]
+    },
+    "Doubt": {
+      "title": "Doubt Session",
+      "description": "Stores history of past questions and explanations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "question": { "type": "string" },
+        "subject": { "type": "string" },
+        "mode": { "type": "string", "enum": ["Quick", "Step-by-Step", "Deep"] },
+        "explanation": { "type": "string" },
+        "timestamp": { "type": "integer" }
+      },
+      "required": ["userId", "question", "explanation", "timestamp"]
+    },
+    "PracticeResult": {
+      "title": "Practice Performance",
+      "description": "Stores student result for a practice session",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "accuracy": { "type": "number" },
+        "timestamp": { "type": "integer" }
+      },
+      "required": ["userId", "subject", "score", "totalQuestions", "timestamp"]
+    },
+    "StudyTask": {
+      "title": "Study Plan Task",
+      "description": "A scheduled task for the student",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "dueDate": { "type": "integer" },
+        "completed": { "type": "boolean" }
+      },
+      "required": ["userId", "title", "subject", "dueDate", "completed"]
+    },
+    "Group": {
+      "title": "Study Group",
+      "description": "Collaborative group for peers",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "subject": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "inviteCode": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["name", "creatorId", "members", "createdAt"]
+    },
+    "Message": {
+      "title": "Group Message",
+      "description": "Chat message within a group",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["senderId", "senderName", "text", "createdAt"]
+    },
+    "Assignment": {
+      "title": "Teacher Assignment",
+      "description": "Task assigned by a teacher to a student or group",
+      "type": "object",
+      "properties": {
+        "teacherId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "subject": { "type": "string" },
+        "dueDate": { "type": "integer" },
+        "completed": { "type": "boolean" }
+      },
+      "required": ["teacherId", "title", "dueDate"]
+    },
+    "Flashcard": {
+      "title": "Study Flashcard",
+      "description": "Individual flashcard for active recall",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "front": { "type": "string" },
+        "back": { "type": "string" },
+        "subject": { "type": "string" },
+        "mastered": { "type": "boolean" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["userId", "front", "back", "subject", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Profile information for each user"
+    },
+    "users/{userId}/flashcards/{cardId}": {
+      "schema": "Flashcard",
+      "description": "Personal flashcards for the user"
+    },
+    "doubts/{doubtId}": {
+      "schema": "Doubt",
+      "description": "Collection of all doubt/explanation sessions"
+    },
+    "practice_results/{resultId}": {
+      "schema": "PracticeResult",
+      "description": "User practice session results"
+    },
+    "study_tasks/{taskId}": {
+      "schema": "StudyTask",
+      "description": "User specific study plan tasks"
+    },
+    "groups/{groupId}": {
+      "schema": "Group",
+      "description": "Collaborative study groups"
+    },
+    "groups/{groupId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a study group"
+    },
+    "assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Assignments created by teachers"
+    }
+  }
+}

@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function getUserData(userId) { return get(/databases/$(database)/documents/users/$(userId)).data; }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get, list: if isSignedIn(); // Allow global lookup for leaderboard/profiles
+      allow create: if isOwner(userId) 
+        && incoming().userId == userId
+        && incoming().onboarded is bool
+        && incoming().email is string;
+      allow update: if (isOwner(userId)
+        && incoming().userId == userId
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['grade', 'subjects', 'goals', 'weakAreas', 'strongAreas', 'streak', 'lastActive', 'totalTopicsStudied', 'onboarded', 'points', 'badges', 'role', 'email'])
+        )) || (isSignedIn() && incoming().diff(existing()).affectedKeys().hasOnly(['points', 'badges'])); 
+      
+      match /flashcards/{cardId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && incoming().userId == userId;
+        allow update: if isOwner(userId) && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['mastered']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['front', 'back', 'subject'])
+        );
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Groups
+    match /groups/{groupId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid in existing().members || request.auth.uid == existing().creatorId);
+      allow delete: if isSignedIn() && request.auth.uid == existing().creatorId;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members);
+        allow create: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members)
+          && incoming().senderId == request.auth.uid;
+      }
+    }
+
+    // Assignments
+    match /assignments/{assignmentId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.studentId || 
+        request.auth.uid == resource.data.teacherId ||
+        (resource.data.groupId != null && request.auth.uid in get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.members)
+      );
+      allow create: if isSignedIn() && getUserData(request.auth.uid).role == 'teacher';
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.teacherId || 
+        (request.auth.uid == resource.data.studentId && incoming().diff(existing()).affectedKeys().hasOnly(['completed']))
+      );
+    }
+
+    // Doubts Collection
+    match /doubts/{doubtId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() 
+        && incoming().userId == request.auth.uid
+        && incoming().question is string && incoming().question.size() < 5000
+        && incoming().explanation is string;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Practice Results
+    match /practice_results/{resultId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() 
+        && incoming().userId == request.auth.uid;
+    }
+
+    // Study Tasks
+    match /study_tasks/{taskId} {
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['completed']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
